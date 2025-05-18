@@ -1,0 +1,9 @@
+set a apple
+set b ball
+set c cat
+get a
+delete c
+get c
+get b
+set b blue
+quit

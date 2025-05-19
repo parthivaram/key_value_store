@@ -20,7 +20,9 @@ class kvstore
     public:
     void set(string key, string value){
         if(db.find(key) != db.end()){
-            cout<< "already a record exists with the given key, delete the existing record to add a different value to this key"<<endl;
+            auto k = db.find(key);
+            k->second = value;
+            cout<< "value for the key is updated"<<endl;
         }
         else{
             db.insert({key, value});
@@ -47,7 +49,7 @@ class kvstore
             cout<<"No record found with key "<<key<<" to delete from the database"<<endl;
         }   
     }
-
+    void friend compact_log(string filename, kvstore &k);
 };
 
 int main()
@@ -105,6 +107,7 @@ int main()
                 cout<< "Leaving command line interface..."<<endl;
                 string content = command;
                 append(filename, content);
+                compact_log(filename, app);
                 return 0;
                 
             }
@@ -128,7 +131,14 @@ void append(const string& filename, string& content){
     ofstream file(filename, ios::app);
     file<<content<<"\n";
 }
-void replay(string filename){
-
+void compact_log(string filename, kvstore &k){
+    ofstream file(filename, std::ofstream::out | std::ofstream::trunc);
+    if(file.is_open()){
+        for(auto i:k.db){
+            file<<"set"<<" "<<i.first<<" "<<i.second<<endl;
+        }
+        file.close();
+    }else{
+        cout<<"error with log file"<<endl;
+    }
 }
-

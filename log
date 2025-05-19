@@ -2,6 +2,11 @@ set a apple
 set b ball
 set c car
 get a
-delete b
+delete c
 get b
+set b blue
+delete b
+set b blue
+get b
+quit
 quit

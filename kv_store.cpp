@@ -41,10 +41,10 @@ class kvstore
     void del(string key){ 
         if(db.find(key) != db.end()){
             db.erase(key);
-            cout<<"Record with key "<<key<< " is deleted"<<endl;   
+            cout<<"Record is deleted"<<endl;   
         }
         else{
-            cout<<"No record found with key "<<key<<" to delete from the database";
+            cout<<"No record found with key "<<key<<" to delete from the database"<<endl;
         }   
     }
 
@@ -56,13 +56,17 @@ int main()
     string command, key, value, line, line_com, line_key, line_val;
     bool persist = checklog(filename);
     ifstream file(filename);
-    cout<<"Hello this is a basic implementation of key value store"<<endl;
-    cout<<"Use the commands to use the application"<<endl;
+    cout<<"Welcome to the command line interface of key value store..."<<endl;
+    cout<<endl;
+    cout<<"Refer the commands below to use the application..."<<endl;
+    cout<<endl;
     cout<<"Store new record --> set [key] [value]; Get a record using key --> get [key]; Delete a record --> delete [key]; quit to exit from the application"<< endl;
+    cout<<endl;
     if(persist){
         //replay the set and delete commands in the log to regain the state  
+        cout<<"processing..."<<endl;
+        cout<<endl;
         while(getline(file, line)){
-            cout<<"executing command:"<<line<<endl;
             stringstream ss(line);
             ss>>line_com>>line_key>>line_val;
             if(line_com == "set"){
@@ -72,9 +76,9 @@ int main()
                 app.del(line_key);
             }
             else{
-                cout<<"this command didn't affect the state"<<endl;
             }
         }
+        cout<<"retained previous state"<<endl;
         while(true)
         {
             cout<<"\n";

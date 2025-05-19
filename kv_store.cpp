@@ -53,12 +53,28 @@ class kvstore
 int main()
 {
     kvstore app;
-    string command, key, value;
+    string command, key, value, line, line_com, line_key, line_val;
     bool persist = checklog(filename);
+    ifstream file(filename);
     cout<<"Hello this is a basic implementation of key value store"<<endl;
     cout<<"Use the commands to use the application"<<endl;
     cout<<"Store new record --> set [key] [value]; Get a record using key --> get [key]; Delete a record --> delete [key]; quit to exit from the application"<< endl;
     if(persist){
+        //replay the set and delete commands in the log to regain the state  
+        while(getline(file, line)){
+            cout<<"executing command:"<<line<<endl;
+            stringstream ss(line);
+            ss<<line_com<<line_key<<line_val;
+            if(line_com == "set"){
+                app.set(line_key, line_val);
+            }
+            else if(line_com == "delete"){
+                app.del(line_key);
+            }
+            else{
+                cout<<"this command didn't affect the state"<<endl;
+            }
+        }
         while(true)
         {
             cout<<"\n";
@@ -107,5 +123,8 @@ bool checklog(const string& filename){
 void append(const string& filename, string& content){
     ofstream file(filename, ios::app);
     file<<content<<"\n";
+}
+void replay(string filename){
+
 }
 

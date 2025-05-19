@@ -7,3 +7,9 @@ get c
 get b
 set b blue
 quit
+get a
+quit
+get a
+get b
+get c
+quit

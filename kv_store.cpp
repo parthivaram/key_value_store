@@ -64,7 +64,7 @@ int main()
         while(getline(file, line)){
             cout<<"executing command:"<<line<<endl;
             stringstream ss(line);
-            ss<<line_com<<line_key<<line_val;
+            ss>>line_com>>line_key>>line_val;
             if(line_com == "set"){
                 app.set(line_key, line_val);
             }

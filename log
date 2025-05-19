@@ -1,15 +1,7 @@
 set a apple
 set b ball
-set c cat
+set c car
 get a
-delete c
-get c
+delete b
 get b
-set b blue
-quit
-get a
-quit
-get a
-get b
-get c
 quit

@@ -3,6 +3,7 @@
 #include<fstream>
 #include<filesystem>
 #include<sstream>
+#include<vector>
 using namespace std;
 
 bool checklog(const string& filename);
@@ -13,6 +14,7 @@ void append(const string& filename, string& content);
 // on every restart, read the commands in the log file line by line to replay them. This will reslt in regaining the previous state.
 // some problem with replay function 
 string filename = "log";
+string backup = "snapshot";
 class kvstore
 {
     private:
@@ -49,15 +51,19 @@ class kvstore
             cout<<"No record found with key "<<key<<" to delete from the database"<<endl;
         }   
     }
-    void friend compact_log(string filename, kvstore &k);
+    void friend snapshot(string u_filename, kvstore &k);
+    void friend replaylog(string u_filename, kvstore &k);
+    void friend replaysnap(string u_filename, kvstore &k);
+    void friend compact_log(string u_filename, kvstore &k);
 };
 
 int main()
 {
     kvstore app;
-    string command, key, value, line, line_com, line_key, line_val;
+    string command, key, value, line;
     bool persist = checklog(filename);
-    ifstream file(filename);
+    bool snap = checklog(backup);
+    //ofstream file(filename, ios::app);
     cout<<"Welcome to the command line interface of key value store..."<<endl;
     cout<<endl;
     cout<<"Refer the commands below to use the application..."<<endl;
@@ -68,37 +74,32 @@ int main()
         //replay the set and delete commands in the log to regain the state  
         cout<<"processing..."<<endl;
         cout<<endl;
-        while(getline(file, line)){
-            stringstream ss(line);
-            ss>>line_com>>line_key>>line_val;
-            if(line_com == "set"){
-                app.set(line_key, line_val);
-            }
-            else if(line_com == "delete"){
-                app.del(line_key);
-            }
-            else{
-            }
+        if(snap)
+        {
+        replaysnap(backup, app);
         }
+        replaylog(filename,app);
         cout<<"retained previous state"<<endl;
         while(true)
         {
             cout<<"\n";
-            cin>>command;
+            getline(cin, line);
+            stringstream ss(line);
+            ss>>command>>key>>value;
             if( command == "set"){
-                cin>>key>>value;
+                //cin>>key>>value;
                 app.set(key,value);
                 string content = command+" "+key+" "+value;
                 append(filename, content);
             }
             else if(command == "get"){
-                cin>>key;
+                //cin>>key;
                 app.get(key);
                 string content = command+" "+key;
                 append(filename, content);
             }
             else if(command =="delete"){
-                cin>>key;
+                //cin>>key;
                 app.del(key);
                 string content = command+" "+key;
                 append(filename, content);
@@ -109,10 +110,14 @@ int main()
                 append(filename, content);
                 compact_log(filename, app);
                 return 0;
-                
+            }
+            else if(command == "snapshot"){
+                cout<<"Taking a snapshot"<<endl;
+                snapshot(backup, app);
+                cout<<"snapshot taken... "<<"clearing logs"<<endl; 
             }
             else{
-                cout<<"Invalid command";
+                cout<<"Invalid command"<<endl;
             }
         }
     }
@@ -131,14 +136,63 @@ void append(const string& filename, string& content){
     ofstream file(filename, ios::app);
     file<<content<<"\n";
 }
-void compact_log(string filename, kvstore &k){
-    ofstream file(filename, std::ofstream::out | std::ofstream::trunc);
+void snapshot(string u_filename, kvstore &k){
+    ofstream file(u_filename, ios::out | ios::trunc); // clear the previous snapshot 
     if(file.is_open()){
         for(auto i:k.db){
-            file<<"set"<<" "<<i.first<<" "<<i.second<<endl;
+            file<<i.first<<" "<<i.second<<endl;
         }
         file.close();
-    }else{
+    }  // update with the current state
+    else{
+        cout<<"error with snapshot file"<<endl;
+    }
+    // clear the log file
+    ofstream file_1(filename, ios::out | ios::trunc);
+    if(file_1.is_open()){
+        file_1.close();
+    }  
+}
+void replaysnap(string u_filename, kvstore &k){
+    string line, line_key, line_val;
+    ifstream file(u_filename);
+    while(getline(file, line))
+    {
+        stringstream ss(line);
+        ss>>line_key>>line_val;
+        k.db.insert({line_key, line_val});
+    }
+}
+void replaylog(string u_filename, kvstore &k){
+    string line, line_com,line_key, line_val;
+    ifstream file(u_filename);
+    while(getline(file, line))
+    {
+        stringstream ss(line);
+        ss>>line_com>>line_key>>line_val;
+        k.db.insert({line_key, line_val});
+    }
+}
+void compact_log(string u_filename, kvstore &k){
+    vector<string> temp;
+    string line, command, key, value;
+    ifstream file(u_filename);
+    while(getline(file, line)){
+        stringstream ss(line);
+        ss>>command>>key>>value;
+        if(command == "set"){
+            temp.push_back(key+" "+ value);
+        }
+    }
+    file.close();
+    ofstream file_1(u_filename, ios::out | ios::trunc);
+    if(file_1.is_open()){
+        for(string i:temp){
+            file_1<<"set"<<" "<<i<<endl;
+        }
+        file_1.close();
+    }
+    else{
         cout<<"error with log file"<<endl;
     }
 }
